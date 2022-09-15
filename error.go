@@ -59,6 +59,10 @@ func New(httpStatus int, code uint, msg string, err error, params ...any) Projec
 	}
 }
 
+func NewDBErr(code uint, err error, params ...any) ProjectError {
+	return New(StatusDBError, code, "", err, params)
+}
+
 func (e ProjectError) Error() string {
 	if e.HttpStatus == StatusProjectError {
 		return "http status 未正確設定"
