@@ -38,7 +38,7 @@ type ProjectError struct {
 // msg 錯誤訊息
 //
 // params 發生錯誤函式，所帶入的參數，可選
-func New(httpStatus int, code uint, msg string, err error, params ...any) ProjectError {
+func New(httpStatus int, code uint, msg string, err error, params ...any) *ProjectError {
 	if httpStatus < 100 || httpStatus >= 600 {
 		httpStatus = StatusProjectError // 此專案訂定的，代表未設定正確的 http status
 	}
@@ -50,7 +50,7 @@ func New(httpStatus int, code uint, msg string, err error, params ...any) Projec
 
 	file, line := caller()
 
-	return ProjectError{
+	return &ProjectError{
 		Code:       code,
 		Msg:        msg,
 		Params:     strings.Join(p, ":"),
@@ -60,15 +60,15 @@ func New(httpStatus int, code uint, msg string, err error, params ...any) Projec
 	}
 }
 
-func NewDBErr(code uint, err error, params ...any) ProjectError {
+func NewDBErr(code uint, err error, params ...any) *ProjectError {
 	return New(StatusDBError, code, "", err, params)
 }
 
-func NewInternalErr(code uint, err error, params ...any) ProjectError {
+func NewInternalErr(code uint, err error, params ...any) *ProjectError {
 	return New(http.StatusInternalServerError, code, "", err, params)
 }
 
-func (e ProjectError) Error() string {
+func (e *ProjectError) Error() string {
 	if e.HttpStatus == StatusProjectError {
 		return "http status 未正確設定"
 	}
@@ -77,7 +77,7 @@ func (e ProjectError) Error() string {
 }
 
 // Contact 接觸過發生錯誤的函式
-func (e ProjectError) Contact() Tracer {
+func (e *ProjectError) Contact() Tracer {
 	file, line := caller()
 	e.Tracer = fmt.Sprintf("(%s:%d)->%s", file, line, e.Tracer)
 	return e
