@@ -2,6 +2,7 @@ package n_error
 
 import (
 	"fmt"
+	"net/http"
 	"runtime"
 	"strings"
 )
@@ -61,6 +62,10 @@ func New(httpStatus int, code uint, msg string, err error, params ...any) Projec
 
 func NewDBErr(code uint, err error, params ...any) ProjectError {
 	return New(StatusDBError, code, "", err, params)
+}
+
+func NewInternalErr(code uint, err error, params ...any) ProjectError {
+	return New(http.StatusInternalServerError, code, "", err, params)
 }
 
 func (e ProjectError) Error() string {
