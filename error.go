@@ -7,7 +7,10 @@ import (
 )
 
 // PROJECT_ERROR 此專案訂定的，代表未設定正確的 http status
-const PROJECT_ERROR = 512
+const (
+	StatusProjectError = 512
+	StatusDBError      = 513
+)
 
 type Tracer interface {
 	error
@@ -36,7 +39,7 @@ type ProjectError struct {
 // params 發生錯誤函式，所帶入的參數，可選
 func New(httpStatus int, code uint, msg string, err error, params ...any) ProjectError {
 	if httpStatus < 100 || httpStatus >= 600 {
-		httpStatus = PROJECT_ERROR // 此專案訂定的，代表未設定正確的 http status
+		httpStatus = StatusProjectError // 此專案訂定的，代表未設定正確的 http status
 	}
 
 	p := make([]string, len(params))
@@ -57,7 +60,7 @@ func New(httpStatus int, code uint, msg string, err error, params ...any) Projec
 }
 
 func (e ProjectError) Error() string {
-	if e.HttpStatus == PROJECT_ERROR {
+	if e.HttpStatus == StatusProjectError {
 		return "http status 未正確設定"
 	}
 
