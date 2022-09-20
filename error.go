@@ -9,8 +9,9 @@ import (
 
 // PROJECT_ERROR 此專案訂定的，代表未設定正確的 http status
 const (
-	StatusProjectError = 512
-	StatusDBError      = 513
+	StatusProjectError   = 512
+	StatusDBError        = 513
+	StatusExServiceError = 514
 )
 
 type Tracer interface {
@@ -27,6 +28,7 @@ type ProjectError struct {
 	Params     string `json:"params"`
 	Tracer     string `json:"tracer"`
 	Err        error  `json:"err"`
+	ServiceID  uint   `json:"service_id"`
 }
 
 // New 回傳 cash-cow 專屬的錯誤類型 ProjectError
@@ -68,12 +70,18 @@ func NewInternalErr(code uint, err error, params ...any) *ProjectError {
 	return New(http.StatusInternalServerError, code, "", err, params)
 }
 
+func NewExService(code uint, serviceID uint, err error, params ...any) *ProjectError {
+	projectErr := New(StatusExServiceError, code, "", err, params)
+	projectErr.ServiceID = serviceID
+	return projectErr
+}
+
 func (e *ProjectError) Error() string {
 	if e.HttpStatus == StatusProjectError {
 		return "http status 未正確設定"
 	}
 
-	return e.Msg
+	return fmt.Sprintf("(%d) %s", e.Code, e.Msg)
 }
 
 // Contact 接觸過發生錯誤的函式
