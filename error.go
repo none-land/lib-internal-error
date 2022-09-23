@@ -50,7 +50,7 @@ func New(httpStatus int, code uint, msg string, err error, params ...any) *Proje
 		p[i] = fmt.Sprintf("%#v", param)
 	}
 
-	file, line := caller()
+	file, line := caller(2)
 
 	return &ProjectError{
 		Code:       code,
@@ -63,17 +63,25 @@ func New(httpStatus int, code uint, msg string, err error, params ...any) *Proje
 }
 
 func NewDBErr(code uint, err error, params ...any) *ProjectError {
-	return New(StatusDBError, code, "", err, params)
+	nErr := New(StatusDBError, code, "", err, params)
+	nErr.initTracer()
+
+	return nErr
 }
 
 func NewInternalErr(code uint, err error, params ...any) *ProjectError {
-	return New(http.StatusInternalServerError, code, "", err, params)
+	nErr := New(http.StatusInternalServerError, code, "", err, params)
+	nErr.initTracer()
+
+	return nErr
 }
 
 func NewExService(code uint, serviceID uint, err error, params ...any) *ProjectError {
-	projectErr := New(StatusExServiceError, code, "", err, params)
-	projectErr.ServiceID = serviceID
-	return projectErr
+	nErr := New(StatusExServiceError, code, "", err, params)
+	nErr.initTracer()
+	nErr.ServiceID = serviceID
+
+	return nErr
 }
 
 func (e *ProjectError) Error() string {
@@ -86,14 +94,14 @@ func (e *ProjectError) Error() string {
 
 // Contact 接觸過發生錯誤的函式
 func (e *ProjectError) Contact() Tracer {
-	file, line := caller()
+	file, line := caller(2)
 	e.Tracer = fmt.Sprintf("(%s:%d)->%s", file, line, e.Tracer)
 	return e
 }
 
-// caller 取得呼叫此函數的檔案位置
-func caller() (string, int) {
-	_, file, line, _ := runtime.Caller(2)
+// caller 取得呼叫此函數的檔案位置，skip 要從 caller 算 1
+func caller(skip int) (string, int) {
+	_, file, line, _ := runtime.Caller(skip)
 
 	if paths := strings.Split(file, "/"); len(paths) > 2 {
 		return strings.Join(paths[len(paths)-2:], "/"), line
@@ -111,4 +119,9 @@ func caller() (string, int) {
 	file = short
 
 	return file, line
+}
+
+func (e *ProjectError) initTracer() {
+	file, line := caller(3)
+	e.Tracer = fmt.Sprintf("(%s:%d)", file, line)
 }
