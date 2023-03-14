@@ -29,6 +29,7 @@ type ProjectError struct {
 	Tracer     string `json:"tracer"`
 	Err        error  `json:"err"`
 	ServiceID  uint   `json:"service_id"`
+	Data       any    `json:"data"`
 }
 
 // New 回傳 cash-cow 專屬的錯誤類型 ProjectError
@@ -41,12 +42,15 @@ type ProjectError struct {
 //
 // params 發生錯誤函式，所帶入的參數，可選
 func New(httpStatus int, code uint, msg string, err error, params ...any) *ProjectError {
+	var data any
+
 	if httpStatus < 100 || httpStatus >= 600 {
 		httpStatus = StatusProjectError // 此專案訂定的，代表未設定正確的 http status
 	}
 
 	p := make([]string, len(params))
 	for i, param := range params {
+		data = params[0]
 		p[i] = fmt.Sprintf("%#v", param)
 	}
 
@@ -59,6 +63,7 @@ func New(httpStatus int, code uint, msg string, err error, params ...any) *Proje
 		HttpStatus: httpStatus,
 		Tracer:     fmt.Sprintf("(%s:%d)", file, line),
 		Err:        err,
+		Data:       data,
 	}
 }
 
